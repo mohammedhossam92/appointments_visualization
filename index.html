@@ -712,6 +712,8 @@
          * - Excel serial numbers
          * - Strings like "DD/MM/YYYY", "D/M/YYYY"
          * - Strings like "YYYY-MM-DD", "YYYY-M-D"
+         * - Strings like "YYYY-D-M" (year-day-month ambiguous format)
+         * Smart detection: if middle/last number > 12, assumes it's a day
          * @param {number|string} dateValue - Excel date value
          * @returns {string} ISO date string (YYYY-MM-DD)
          */
@@ -729,16 +731,40 @@
                     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 }
 
-                // Try YYYY-MM-DD format (strict)
+                // Try YYYY-MM-DD format (strict, all 2 digits)
                 if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
                     return trimmed;
                 }
 
-                // Try YYYY-M-D format (flexible, single digits for month/day)
+                // Try flexible YYYY-?-? format with smart detection
                 const flexMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
                 if (flexMatch) {
-                    const [, year, month, day] = flexMatch;
-                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const [, year, part1, part2] = flexMatch;
+                    const num1 = parseInt(part1, 10);
+                    const num2 = parseInt(part2, 10);
+                    
+                    let month, day;
+                    
+                    // Smart detection: if second part > 12, it must be day (YYYY-M-D)
+                    if (num2 > 12) {
+                        month = num1;
+                        day = num2;
+                    }
+                    // If first part > 12, it must be day (YYYY-D-M format)
+                    else if (num1 > 12) {
+                        day = num1;
+                        month = num2;
+                    }
+                    // If both <= 12, default to YYYY-M-D (standard format)
+                    else {
+                        month = num1;
+                        day = num2;
+                    }
+                    
+                    // Validate month is 1-12 and day is 1-31
+                    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    }
                 }
 
                 return null;
