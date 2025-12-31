@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تصور المواعيد - عيادة الأسنان</title>
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet"/>
+    
+    <style>
+        /* ===== ROOT & TYPOGRAPHY ===== */
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --neutral-light: #f3f4f6;
+            --neutral-medium: #e5e7eb;
+            --neutral-dark: #374151;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #d1d5db;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', sans-serif, 'Arial', 'Droid Arabic Kufi';
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ===== CONTAINER & LAYOUT ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+            border-right: 5px solid var(--primary-color);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* ===== UPLOAD SECTION ===== */
+        .upload-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            flex-direction: row-reverse;
+        }
+
+        .upload-section label {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+            border: 2px solid transparent;
+            width: 100%;
+        }
+
+        .file-input-label:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .file-input-label:active {
+            transform: translateY(0);
+        }
+
+        .file-name {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* ===== MESSAGES ===== */
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            animation: slideIn 0.3s ease;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .message.info {
+            background: #dbeafe;
+            color: #0c2d6b;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .message.warning {
+            background: #fef3c7;
+            color: #78350f;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        /* ===== STATS ===== */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: var(--neutral-light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-right: 3px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== CALENDAR CONTAINER ===== */
+        .calendar-wrapper {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            overflow-x: auto;
+        }
+
+        /* ===== FULLCALENDAR CUSTOMIZATION ===== */
+        .fc {
+            font-family: inherit;
+        }
+
+        .fc .fc-button-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-size: 13px;
+            padding: 6px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .fc .fc-button-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .fc .fc-button-primary.fc-button-active {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .fc .fc-button-group {
+            gap: 5px;
+        }
+
+        .fc .fc-col-header-cell {
+            background: var(--neutral-light);
+            color: var(--text-primary);
+            font-weight: 600;
+            border-color: var(--border-color);
+            padding: 12px 4px;
+        }
+
+        .fc .fc-daygrid-day {
+            border-color: var(--border-color);
+        }
+
+        .fc .fc-daygrid-day-number {
+            padding: 8px 6px;
+            font-weight: 500;
+        }
+
+        .fc .fc-daygrid-day.fc-day-today {
+            background-color: rgba(37, 99, 235, 0.1);
+        }
+
+        .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .fc .fc-event {
+            padding: 2px;
+        }
+
+        .fc .fc-event-title {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 6px;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fc-event-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-dark);
+        }
+
+        .fc-event-primary .fc-event-title {
+            color: white;
+        }
+
+        .fc .fc-event:hover {
+            opacity: 0.9;
+            box-shadow: var(--shadow);
+        }
+
+        .fc .fc-toolbar.fc-header-toolbar {
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-direction: row-reverse;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            flex-direction: row-reverse;
+            gap: 15px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 100px;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .detail-value.empty {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .modal-footer button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .modal-footer button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .upload-section {
+                flex-direction: column-reverse;
+            }
+
+            .upload-section label {
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .fc .fc-toolbar {
+                flex-direction: column-reverse;
+            }
+
+            .modal {
+                width: 95%;
+            }
+        }
+
+        /* ===== LOADING SPINNER ===== */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== HEADER ===== -->
+    <div class="container">
+        <div class="header">
+            <h1>📅 نظام تصور المواعيد</h1>
+            <p>عيادة الأسنان - إدارة المواعيد بسهولة</p>
+        </div>
+
+        <!-- ===== UPLOAD SECTION ===== -->
+        <div class="upload-section">
+            <div class="message" id="message"></div>
+            
+            <label>
+                <div class="file-input-wrapper">
+                    <input 
+                        type="file" 
+                        id="fileInput" 
+                        accept=".xlsx,.xls"
+                        aria-label="تحميل ملف Excel"
+                    >
+                    <div class="file-input-label">
+                        <span>📁 حمّل ملف Excel</span>
+                    </div>
+                    <span class="file-name" id="fileName"></span>
+                </div>
+            </label>
+        </div>
+
+        <!-- ===== STATS ===== -->
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-box">
+                <div class="stat-value" id="totalEvents">0</div>
+                <div class="stat-label">إجمالي المواعيد</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="startDate">—</div>
+                <div class="stat-label">تاريخ البداية</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="endDate">—</div>
+                <div class="stat-label">تاريخ النهاية</div>
+            </div>
+        </div>
+
+        <!-- ===== CALENDAR ===== -->
+        <div class="calendar-wrapper">
+            <div id="calendar"></div>
+            <div id="emptyState" class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <h3>لم يتم تحميل أي مواعيد</h3>
+                <p>حمّل ملف Excel لعرض المواعيد على التقويم</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EVENT DETAILS MODAL ===== -->
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h2 id="modalTitle">تفاصيل الموعد</h2>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button onclick="closeModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LIBRARIES ===== -->
+    <!-- SheetJS for Excel parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/sheetjs@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+    <script>
+        // ========================================
+        // GLOBAL STATE
+        // ========================================
+        let calendar = null;
+        const state = {
+            events: [],
+            allRawRows: [],
+            errors: []
+        };
+
+        // ========================================
+        // EXCEL COLUMN NAMES (Arabic Headers)
+        // ========================================
+        const COLUMN_NAMES = {
+            day: 'اليوم',
+            date: 'التاريخ',
+            room: 'غرفة الكشف',
+            startTime: 'من',
+            endTime: 'حتى',
+            patientName: 'الأسم',
+            procedure: 'الإجراء',
+            doctor: 'الطبيب',
+            phone: 'تليفون'
+        };
+
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+
+        /**
+         * Show message to user
+         * @param {string} text - Message text
+         * @param {string} type - 'success', 'error', 'info', 'warning'
+         * @param {number} duration - Auto-hide duration in ms (0 = no auto-hide)
+         */
+        function showMessage(text, type = 'info', duration = 5000) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = `message show ${type}`;
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    msgEl.classList.remove('show');
+                }, duration);
+            }
+        }
+
+        /**
+         * Parse Excel time string and handle artifacts
+         * Artifacts: "02:00\n_x000D_PM" -> "02:00 PM"
+         * @param {string} timeStr - Raw time string
+         * @returns {string} Cleaned time string (HH:MM or HH:MM AM/PM)
+         */
+        function cleanTimeString(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string') return '';
+            
+            // Remove artifacts
+            timeStr = timeStr.replace(/\n_x000D_/g, ' ')
+                             .replace(/\\n_x000D_/g, ' ')
+                             .trim();
+            
+            return timeStr;
+        }
+
+        /**
+         * Convert Excel date (number or string) to ISO format (YYYY-MM-DD)
+         * Handles:
+         * - Excel serial numbers
+         * - Strings like "DD/MM/YYYY"
+         * @param {number|string} dateValue - Excel date value
+         * @returns {string} ISO date string (YYYY-MM-DD)
+         */
+        function parseExcelDate(dateValue) {
+            if (!dateValue) return null;
+
+            // If string like "DD/MM/YYYY"
+            if (typeof dateValue === 'string') {
+                const trimmed = dateValue.trim();
+                
+                // Try DD/MM/YYYY format
+                const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (match) {
+                    const [, day, month, year] = match;
+                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                }
+
+                // Try YYYY-MM-DD format
+                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+                    return trimmed;
+                }
+
+                return null;
+            }
+
+            // If Excel serial number (number)
+            if (typeof dateValue === 'number') {
+                // Excel epoch: 1899-12-30
+                const excelEpoch = new Date(1899, 11, 30);
+                const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+                
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}`;
+            }
+
+            return null;
+        }
+
+        /**
+         * Parse time string (supports various formats)
+         * Returns time in HH:MM format for datetime construction
+         * @param {string} timeStr - Time string like "14:30" or "02:30 PM"
+         * @returns {string} Normalized time (HH:MM)
+         */
+        function parseTime(timeStr) {
+            if (!timeStr || typeof timeStr !== 'string') return '00:00';
+
+            timeStr = timeStr.trim();
+            
+            // Check for AM/PM format
+            const isPM = /PM|ص/i.test(timeStr);
+            const isAM = /AM|ع/i.test(timeStr);
+            
+            // Extract numbers
+            const matches = timeStr.match(/(\d{1,2}):?(\d{2})?/);
+            if (!matches) return '00:00';
+
+            let hours = parseInt(matches[1], 10);
+            const minutes = matches[2] ? parseInt(matches[2], 10) : 0;
+
+            // Convert AM/PM to 24-hour format
+            if (isPM && hours !== 12) hours += 12;
+            if (isAM && hours === 12) hours = 0;
+
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        /**
+         * Combine date and time into ISO datetime string
+         * @param {string} dateStr - YYYY-MM-DD
+         * @param {string} timeStr - HH:MM
+         * @returns {string} ISO datetime (YYYY-MM-DDTHH:MM)
+         */
+        function combineDateAndTime(dateStr, timeStr) {
+            if (!dateStr) return null;
+            if (!timeStr) timeStr = '00:00';
+            
+            return `${dateStr}T${timeStr}`;
+        }
+
+        /**
+         * Extract column indices from header row
+         * @param {array} headers - First row from Excel
+         * @returns {object} Map of column name to index
+         */
+        function getColumnIndices(headers) {
+            const indices = {};
+            
+            for (const key in COLUMN_NAMES) {
+                const colName = COLUMN_NAMES[key];
+                const idx = headers.findIndex(h => 
+                    h && h.toString().trim() === colName
+                );
+                indices[key] = idx >= 0 ? idx : null;
+            }
+            
+            return indices;
+        }
+
+        /**
+         * Safe cell access
+         * @param {array} row - Excel row
+         * @param {number} index - Column index
+         * @returns {*} Cell value or empty string
+         */
+        function getCellValue(row, index) {
+            if (index === null || index === undefined) return '';
+            return row[index] !== undefined ? row[index] : '';
+        }
+
+        /**
+         * Convert Excel row to calendar event
+         * @param {array} row - Excel row data
+         * @param {object} indices - Column indices
+         * @param {number} rowIndex - Row number for error tracking
+         * @returns {object|null} Event object or null if invalid
+         */
+        function parseAppointmentRow(row, indices, rowIndex) {
+            try {
+                // Extract cell values
+                const dateRaw = getCellValue(row, indices.date);
+                const startTimeRaw = getCellValue(row, indices.startTime);
+                const endTimeRaw = getCellValue(row, indices.endTime);
+                const patientName = getCellValue(row, indices.patientName);
+                const procedure = getCellValue(row, indices.procedure);
+                const doctor = getCellValue(row, indices.doctor);
+                const phone = getCellValue(row, indices.phone);
+                const room = getCellValue(row, indices.room);
+
+                // Validate required fields
+                if (!dateRaw || !startTimeRaw || !patientName) {
+                    state.errors.push({
+                        row: rowIndex + 1,
+                        reason: 'حقول مطلوبة مفقودة (التاريخ، الوقت من، اسم المريض)'
+                    });
+                    return null;
+                }
+
+                // Parse and normalize date
+                const dateStr = parseExcelDate(dateRaw);
+                if (!dateStr) {
+                    state.errors.push({
+                        row: rowIndex + 1,
+                        reason: `تنسيق التاريخ غير صحيح: "${dateRaw}"`
+                    });
+                    return null;
+                }
+
+                // Parse and normalize times
+                const cleanStartTime = cleanTimeString(startTimeRaw);
+                const cleanEndTime = cleanTimeString(endTimeRaw || startTimeRaw);
+                
+                const startTime = parseTime(cleanStartTime);
+                const endTime = parseTime(cleanEndTime);
+
+                // Combine date and time
+                const startDateTime = combineDateAndTime(dateStr, startTime);
+                const endDateTime = combineDateAndTime(dateStr, endTime);
+
+                if (!startDateTime || !endDateTime) {
+                    state.errors.push({
+                        row: rowIndex + 1,
+                        reason: 'فشل في دمج التاريخ والوقت'
+                    });
+                    return null;
+                }
+
+                // Build event title
+                const titleParts = [patientName];
+                if (procedure) titleParts.push(`– ${procedure}`);
+                const title = titleParts.join(' ');
+
+                // Create event object
+                const event = {
+                    title,
+                    start: startDateTime,
+                    end: endDateTime,
+                    extendedProps: {
+                        patientName: patientName || '—',
+                        doctor: doctor || '—',
+                        procedure: procedure || '—',
+                        phone: phone || '—',
+                        room: room || '—',
+                        rawDate: dateStr,
+                        rawStartTime: cleanStartTime,
+                        rawEndTime: cleanEndTime
+                    },
+                    backgroundColor: '#2563eb',
+                    borderColor: '#1e40af'
+                };
+
+                return event;
+            } catch (error) {
+                state.errors.push({
+                    row: rowIndex + 1,
+                    reason: `خطأ في معالجة الصف: ${error.message}`
+                });
+                return null;
+            }
+        }
+
+        /**
+         * Process Excel file
+         * @param {File} file - Excel file
+         */
+        async function processExcelFile(file) {
+            try {
+                showMessage('جاري معالجة الملف...', 'info', 0);
+
+                // Validate file type
+                const validTypes = [
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.ms-excel'
+                ];
+                
+                if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+                    throw new Error('نوع الملف غير صحيح. الرجاء تحميل ملف Excel (.xlsx أو .xls)');
+                }
+
+                // Read file as array buffer
+                const buffer = await file.arrayBuffer();
+                const workbook = XLSX.read(buffer, { type: 'array' });
+
+                if (!workbook.SheetNames.length) {
+                    throw new Error('الملف لا يحتوي على أي أوراق عمل');
+                }
+
+                // Get first sheet
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                if (!data.length) {
+                    throw new Error('الملف فارغ أو لا يحتوي على بيانات');
+                }
+
+                // Extract headers from first row
+                const headers = data[0];
+                const indices = getColumnIndices(headers);
+
+                // Check for required columns
+                const requiredCols = ['date', 'startTime', 'patientName'];
+                const missingCols = requiredCols.filter(col => indices[col] === null);
+
+                if (missingCols.length > 0) {
+                    const missingNames = missingCols.map(col => COLUMN_NAMES[col]).join(', ');
+                    throw new Error(`الأعمدة المطلوبة مفقودة: ${missingNames}`);
+                }
+
+                // Reset state
+                state.events = [];
+                state.allRawRows = data.slice(1);
+                state.errors = [];
+
+                // Parse rows
+                let successCount = 0;
+                for (let i = 1; i < data.length; i++) {
+                    const event = parseAppointmentRow(data[i], indices, i);
+                    if (event) {
+                        state.events.push(event);
+                        successCount++;
+                    }
+                }
+
+                if (successCount === 0) {
+                    throw new Error('لم يتمكن من معالجة أي مواعيد من الملف');
+                }
+
+                // Update UI
+                updateCalendar();
+                updateStats();
+
+                // Show success message
+                let msg = `✅ تم تحميل ${successCount} موعد بنجاح`;
+                if (state.errors.length > 0) {
+                    msg += ` (${state.errors.length} صف تم تخطيه)`;
+                }
+                showMessage(msg, 'success', 5000);
+
+                // Log errors if any
+                if (state.errors.length > 0) {
+                    console.warn('معالجة الأخطاء:', state.errors);
+                }
+
+            } catch (error) {
+                state.events = [];
+                state.errors = [];
+                updateCalendar();
+                document.getElementById('stats').style.display = 'none';
+                showMessage(`❌ ${error.message}`, 'error', 8000);
+                console.error('File processing error:', error);
+            }
+        }
+
+        /**
+         * Update calendar with events
+         */
+        function updateCalendar() {
+            if (!calendar) return;
+
+            // Remove existing events
+            calendar.removeAllEvents();
+
+            // Add new events
+            calendar.addEventSource(state.events);
+        }
+
+        /**
+         * Update statistics display
+         */
+        function updateStats() {
+            const statsEl = document.getElementById('stats');
+            
+            if (state.events.length === 0) {
+                statsEl.style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+            statsEl.style.display = 'grid';
+
+            // Sort events by start date
+            const sorted = [...state.events].sort((a, b) => 
+                new Date(a.start) - new Date(b.start)
+            );
+
+            const firstEvent = sorted[0];
+            const lastEvent = sorted[sorted.length - 1];
+
+            document.getElementById('totalEvents').textContent = state.events.length;
+            document.getElementById('startDate').textContent = firstEvent.extendedProps.rawDate;
+            document.getElementById('endDate').textContent = lastEvent.extendedProps.rawDate;
+        }
+
+        /**
+         * Show event details modal
+         * @param {object} event - Calendar event
+         */
+        function showEventModal(event) {
+            const modal = document.getElementById('eventModal');
+            const props = event.extendedProps;
+
+            document.getElementById('modalTitle').textContent = event.title;
+
+            const details = `
+                <div class="detail-row">
+                    <div class="detail-label">المريض:</div>
+                    <div class="detail-value">${props.patientName}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الطبيب:</div>
+                    <div class="detail-value">${props.doctor !== '—' ? props.doctor : '<span class="empty">لم يتم تحديده</span>'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الإجراء:</div>
+                    <div class="detail-value">${props.procedure !== '—' ? props.procedure : '<span class="empty">لم يتم تحديده</span>'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الغرفة:</div>
+                    <div class="detail-value">${props.room !== '—' ? props.room : '<span class="empty">لم يتم تحديدها</span>'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">التاريخ:</div>
+                    <div class="detail-value">${props.rawDate}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الوقت:</div>
+                    <div class="detail-value">${props.rawStartTime} - ${props.rawEndTime}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">الهاتف:</div>
+                    <div class="detail-value" dir="ltr">${props.phone !== '—' ? props.phone : '<span class="empty">لم يتم تحديده</span>'}</div>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = details;
+            modal.classList.add('show');
+        }
+
+        /**
+         * Close event modal
+         */
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('show');
+        }
+
+        /**
+         * Initialize FullCalendar
+         */
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    start: 'prev,next today',
+                    center: 'title',
+                    end: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                views: {
+                    dayGridMonth: { buttonText: 'شهري' },
+                    timeGridWeek: { buttonText: 'أسبوعي' },
+                    timeGridDay: { buttonText: 'يومي' }
+                },
+                locale: 'ar',
+                direction: 'rtl',
+                editable: false,
+                eventClick: function(info) {
+                    showEventModal(info.event);
+                },
+                eventDisplay: 'block',
+                height: 'auto',
+                contentHeight: 'auto'
+            });
+
+            calendar.render();
+        }
+
+        /**
+         * Handle file input change
+         */
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            
+            if (!file) return;
+
+            // Update file name display
+            document.getElementById('fileName').textContent = `📄 ${file.name}`;
+
+            // Process file
+            processExcelFile(file);
+
+            // Reset input for re-upload of same file
+            e.target.value = '';
+        });
+
+        /**
+         * Close modal when clicking overlay
+         */
+        document.getElementById('eventModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCalendar();
+        });
+    </script>
+</body>
+</html>
