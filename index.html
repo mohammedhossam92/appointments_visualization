@@ -9,21 +9,28 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet"/>
     
     <style>
+        /* ===== FULLCALENDAR DARK MODE OVERRIDES ===== */
+        .fc {
+            --fc-bg-event-opacity: 0.85;
+            --fc-list-event-hover-bg-color: rgba(59, 130, 246, 0.1);
+        }
         /* ===== ROOT & TYPOGRAPHY ===== */
         :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1e40af;
+            --primary-color: #3b82f6;
+            --primary-dark: #1e3a8a;
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --neutral-light: #f3f4f6;
-            --neutral-medium: #e5e7eb;
-            --neutral-dark: #374151;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #d1d5db;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --neutral-light: #1f2937;
+            --neutral-medium: #374151;
+            --neutral-dark: #111827;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #4b5563;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -34,7 +41,7 @@
 
         body {
             font-family: 'Segoe UI', 'Tahoma', sans-serif, 'Arial', 'Droid Arabic Kufi';
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
             color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
@@ -47,7 +54,7 @@
         }
 
         .header {
-            background: white;
+            background: var(--bg-secondary);
             padding: 30px;
             border-radius: 12px;
             box-shadow: var(--shadow-lg);
@@ -69,7 +76,7 @@
 
         /* ===== UPLOAD SECTION ===== */
         .upload-section {
-            background: white;
+            background: var(--bg-secondary);
             padding: 25px;
             border-radius: 12px;
             box-shadow: var(--shadow);
@@ -157,26 +164,26 @@
         }
 
         .message.success {
-            background: #d1fae5;
-            color: #065f46;
+            background: rgba(16, 185, 129, 0.15);
+            color: #86efac;
             border-left: 4px solid var(--success-color);
         }
 
         .message.error {
-            background: #fee2e2;
-            color: #7f1d1d;
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
             border-left: 4px solid var(--danger-color);
         }
 
         .message.info {
-            background: #dbeafe;
-            color: #0c2d6b;
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
             border-left: 4px solid var(--primary-color);
         }
 
         .message.warning {
-            background: #fef3c7;
-            color: #78350f;
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
             border-left: 4px solid var(--warning-color);
         }
 
@@ -212,7 +219,7 @@
 
         /* ===== CALENDAR CONTAINER ===== */
         .calendar-wrapper {
-            background: white;
+            background: var(--bg-secondary);
             padding: 25px;
             border-radius: 12px;
             box-shadow: var(--shadow-lg);
@@ -230,6 +237,7 @@
             font-size: 13px;
             padding: 6px 14px;
             transition: all 0.3s ease;
+            color: white;
         }
 
         .fc .fc-button-primary:hover {
@@ -242,12 +250,21 @@
             border-color: var(--primary-dark);
         }
 
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
         .fc .fc-button-group {
             gap: 5px;
         }
 
+        .fc .fc-button-primary.fc-button-active:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+
         .fc .fc-col-header-cell {
-            background: var(--neutral-light);
+            background: var(--neutral-medium);
             color: var(--text-primary);
             font-weight: 600;
             border-color: var(--border-color);
@@ -256,15 +273,17 @@
 
         .fc .fc-daygrid-day {
             border-color: var(--border-color);
+            background: var(--bg-secondary);
         }
 
         .fc .fc-daygrid-day-number {
             padding: 8px 6px;
             font-weight: 500;
+            color: var(--text-secondary);
         }
 
         .fc .fc-daygrid-day.fc-day-today {
-            background-color: rgba(37, 99, 235, 0.1);
+            background-color: rgba(59, 130, 246, 0.15);
         }
 
         .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
@@ -312,6 +331,36 @@
             margin: 0;
         }
 
+        .fc .fc-daygrid-day-frame {
+            background: var(--bg-secondary);
+        }
+
+        .fc .fc-daygrid {
+            background: var(--bg-secondary);
+        }
+
+        .fc .fc-daygrid-body {
+            background: var(--bg-secondary);
+        }
+
+        .fc .fc-timegrid {
+            background: var(--bg-secondary);
+        }
+
+        .fc .fc-timegrid-slot {
+            background: var(--bg-secondary);
+        }
+
+        .fc .fc-col-time-cell {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .fc .fc-daygrid-day-bg {
+            background: var(--bg-secondary);
+        }
+
         /* ===== MODAL ===== */
         .modal-overlay {
             display: none;
@@ -341,7 +390,7 @@
         }
 
         .modal {
-            background: white;
+            background: var(--bg-secondary);
             border-radius: 12px;
             box-shadow: var(--shadow-lg);
             max-width: 500px;
