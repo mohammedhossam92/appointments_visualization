@@ -707,82 +707,183 @@
         }
 
         /**
-         * Convert Excel date (number or string) to ISO format (YYYY-MM-DD)
-         * Handles:
-         * - Excel serial numbers
-         * - Strings like "DD/MM/YYYY", "D/M/YYYY"
-         * - Strings like "YYYY-MM-DD", "YYYY-M-D"
-         * - Strings like "YYYY-D-M" (year-day-month ambiguous format)
-         * Smart detection: if middle/last number > 12, assumes it's a day
-         * @param {number|string} dateValue - Excel date value
-         * @returns {string} ISO date string (YYYY-MM-DD)
+         * Normalize Excel date to ISO format (YYYY-MM-DD)
+         * Handles: Date objects, strings (DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, etc.)
+         * Safe parsing with no thrown exceptions
+         * 
+         * @param {*} input - Raw Excel cell value (Date, string, number, null, undefined)
+         * @param {number} rowIndex - Row number for error context (optional)
+         * @returns {string|null} ISO date string (YYYY-MM-DD) or null if invalid/unparseable
          */
-        function parseExcelDate(dateValue) {
-            if (!dateValue) return null;
-
-            // If string format
-            if (typeof dateValue === 'string') {
-                const trimmed = dateValue.trim();
-                
-                // Try DD/MM/YYYY or D/M/YYYY format (slash format)
-                const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-                if (slashMatch) {
-                    const [, day, month, year] = slashMatch;
-                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                }
-
-                // Try YYYY-MM-DD format (strict, all 2 digits)
-                if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-                    return trimmed;
-                }
-
-                // Try flexible YYYY-?-? format with smart detection
-                const flexMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-                if (flexMatch) {
-                    const [, year, part1, part2] = flexMatch;
-                    const num1 = parseInt(part1, 10);
-                    const num2 = parseInt(part2, 10);
-                    
-                    let month, day;
-                    
-                    // Smart detection: if second part > 12, it must be day (YYYY-M-D)
-                    if (num2 > 12) {
-                        month = num1;
-                        day = num2;
-                    }
-                    // If first part > 12, it must be day (YYYY-D-M format)
-                    else if (num1 > 12) {
-                        day = num1;
-                        month = num2;
-                    }
-                    // If both <= 12, default to YYYY-M-D (standard format)
-                    else {
-                        month = num1;
-                        day = num2;
-                    }
-                    
-                    // Validate month is 1-12 and day is 1-31
-                    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    }
-                }
-
+        function normalizeExcelDate(input, rowIndex = null) {
+            // Handle empty/null/undefined
+            if (input === null || input === undefined || input === '') {
                 return null;
             }
 
-            // If Excel serial number (number)
-            if (typeof dateValue === 'number') {
-                // Excel epoch: 1899-12-30
-                const excelEpoch = new Date(1899, 11, 30);
-                const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+            // ===== HANDLE DATE OBJECTS =====
+            if (input instanceof Date) {
+                // Check if valid date
+                if (isNaN(input.getTime())) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Invalid Date object${context}`);
+                    return null;
+                }
                 
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                
+                const year = input.getFullYear();
+                const month = String(input.getMonth() + 1).padStart(2, '0');
+                const day = String(input.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
             }
 
+            // ===== HANDLE EXCEL SERIAL NUMBERS =====
+            if (typeof input === 'number') {
+                // Excel epoch: December 30, 1899
+                // Excel serial: number of days since epoch
+                try {
+                    const excelEpoch = new Date(1899, 11, 30);
+                    const date = new Date(excelEpoch.getTime() + input * 24 * 60 * 60 * 1000);
+                    
+                    if (isNaN(date.getTime())) {
+                        const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                        console.warn(`Invalid Excel serial number: ${input}${context}`);
+                        return null;
+                    }
+                    
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                } catch (error) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Error parsing Excel serial number ${input}${context}: ${error.message}`);
+                    return null;
+                }
+            }
+
+            // ===== HANDLE STRING DATES =====
+            if (typeof input === 'string') {
+                const trimmed = input.trim();
+                
+                if (trimmed === '') return null;
+
+                // Detect delimiter (/ or -)
+                const hasSlash = trimmed.includes('/');
+                const hasDash = trimmed.includes('-');
+
+                if (!hasSlash && !hasDash) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`No delimiter found in date string: "${trimmed}"${context}`);
+                    return null;
+                }
+
+                // Split by delimiter
+                const delimiter = hasSlash ? '/' : '-';
+                const parts = trimmed.split(delimiter).map(p => p.trim());
+
+                if (parts.length !== 3) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Invalid date format (expected 3 parts): "${trimmed}"${context}`);
+                    return null;
+                }
+
+                // Parse parts as integers
+                const nums = parts.map(p => {
+                    const n = parseInt(p, 10);
+                    return isNaN(n) ? null : n;
+                });
+
+                if (nums.some(n => n === null)) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Non-numeric values in date string: "${trimmed}"${context}`);
+                    return null;
+                }
+
+                // ===== INFER FORMAT =====
+                let year, month, day;
+
+                // If first part >= 1000, it's YYYY (year first)
+                if (nums[0] >= 1000) {
+                    year = nums[0];
+                    const part2 = nums[1];
+                    const part3 = nums[2];
+
+                    // Smart detection: YYYY-?-?
+                    // If part3 > 12, it must be day (YYYY-M-D)
+                    if (part3 > 12) {
+                        month = part2;
+                        day = part3;
+                    }
+                    // If part2 > 12, it must be day (YYYY-D-M)
+                    else if (part2 > 12) {
+                        day = part2;
+                        month = part3;
+                    }
+                    // Both <= 12: assume YYYY-M-D (standard)
+                    else {
+                        month = part2;
+                        day = part3;
+                    }
+                } else {
+                    // Year is not first, try to infer DD/MM/YYYY or MM/DD/YYYY
+                    // Use constraint: month <= 12, day <= 31
+                    const part1 = nums[0];
+                    const part2 = nums[1];
+                    const part3 = nums[2];
+
+                    // Year must be 3+ digits
+                    if (part3 < 1000) {
+                        const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                        console.warn(`Year not found in date string: "${trimmed}"${context}`);
+                        return null;
+                    }
+
+                    year = part3;
+
+                    // Infer day/month from part1 and part2
+                    // If part1 > 12, it's day (DD/MM/YYYY)
+                    if (part1 > 12) {
+                        day = part1;
+                        month = part2;
+                    }
+                    // If part2 > 12, it's day (MM/DD/YYYY)
+                    else if (part2 > 12) {
+                        month = part1;
+                        day = part2;
+                    }
+                    // Both <= 12: ambiguous - assume DD/MM (common in non-US locales)
+                    else {
+                        day = part1;
+                        month = part2;
+                    }
+                }
+
+                // ===== VALIDATE =====
+                if (month < 1 || month > 12) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Invalid month ${month} in date string: "${trimmed}"${context}`);
+                    return null;
+                }
+
+                if (day < 1 || day > 31) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Invalid day ${day} in date string: "${trimmed}"${context}`);
+                    return null;
+                }
+
+                if (year < 1900 || year > 2100) {
+                    const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+                    console.warn(`Year out of range ${year} in date string: "${trimmed}"${context}`);
+                    return null;
+                }
+
+                // ===== RETURN NORMALIZED DATE =====
+                return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+
+            // Unknown type
+            const context = rowIndex !== null ? ` (Row ${rowIndex + 1})` : '';
+            console.warn(`Unsupported date input type: ${typeof input}${context}`);
             return null;
         }
 
@@ -886,12 +987,12 @@
                     return null;
                 }
 
-                // Parse and normalize date
-                const dateStr = parseExcelDate(dateRaw);
+                // Parse and normalize date with row context
+                const dateStr = normalizeExcelDate(dateRaw, rowIndex);
                 if (!dateStr) {
                     state.errors.push({
                         row: rowIndex + 1,
-                        reason: `تنسيق التاريخ غير صحيح: "${dateRaw}"`
+                        reason: `فشل تحليل التاريخ: "${dateRaw}"`
                     });
                     return null;
                 }
@@ -935,8 +1036,8 @@
                         rawStartTime: cleanStartTime,
                         rawEndTime: cleanEndTime
                     },
-                    backgroundColor: '#2563eb',
-                    borderColor: '#1e40af'
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#1e3a8a'
                 };
 
                 return event;
@@ -945,6 +1046,7 @@
                     row: rowIndex + 1,
                     reason: `خطأ في معالجة الصف: ${error.message}`
                 });
+                console.error(`Row ${rowIndex + 1} parsing error:`, error);
                 return null;
             }
         }
