@@ -710,27 +710,35 @@
          * Convert Excel date (number or string) to ISO format (YYYY-MM-DD)
          * Handles:
          * - Excel serial numbers
-         * - Strings like "DD/MM/YYYY"
+         * - Strings like "DD/MM/YYYY", "D/M/YYYY"
+         * - Strings like "YYYY-MM-DD", "YYYY-M-D"
          * @param {number|string} dateValue - Excel date value
          * @returns {string} ISO date string (YYYY-MM-DD)
          */
         function parseExcelDate(dateValue) {
             if (!dateValue) return null;
 
-            // If string like "DD/MM/YYYY"
+            // If string format
             if (typeof dateValue === 'string') {
                 const trimmed = dateValue.trim();
                 
-                // Try DD/MM/YYYY format
-                const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-                if (match) {
-                    const [, day, month, year] = match;
+                // Try DD/MM/YYYY or D/M/YYYY format (slash format)
+                const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (slashMatch) {
+                    const [, day, month, year] = slashMatch;
                     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 }
 
-                // Try YYYY-MM-DD format
+                // Try YYYY-MM-DD format (strict)
                 if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
                     return trimmed;
+                }
+
+                // Try YYYY-M-D format (flexible, single digits for month/day)
+                const flexMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                if (flexMatch) {
+                    const [, year, month, day] = flexMatch;
+                    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 }
 
                 return null;
