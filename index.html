@@ -1153,7 +1153,7 @@
                         'application/vnd.ms-excel'
                     ];
                     
-                    if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
+                    if (!validTypes.includes(file.type) && !isExcel) {
                         throw new Error('نوع الملف غير صحيح. الرجاء تحميل ملف Excel (.xlsx أو .xls) أو CSV');
                     }
 
