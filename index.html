@@ -1149,7 +1149,7 @@
                 } else {
                     // Process Excel file
                     if (typeof XLSX === 'undefined') {
-                        throw new Error('مكتبة معالجة Excel غير متاحة. يرجى تعطيل منع التتبع في المتصفح وإعادة تحميل الصفحة.');
+                        throw new Error('مكتبة معالجة Excel غير متاحة. يرجى التحقق من اتصال الإنترنت وإعادة تحميل الصفحة.');
                     }
                     
                     const validTypes = [
@@ -1392,14 +1392,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Check if required libraries are loaded
             if (typeof FullCalendar === 'undefined') {
-                showMessage('⚠️ فشل تحميل مكتبة التقويم. يرجى تعطيل منع التتبع أو تحديث صفحة المتصفح.', 'error', 0);
-                console.error('FullCalendar library failed to load. This may be due to tracking prevention or network issues.');
+                showMessage('⚠️ فشل تحميل مكتبة التقويم. يرجى التحقق من اتصال الإنترنت وإعادة تحميل الصفحة.', 'error', 0);
+                console.error('FullCalendar library failed to load. This may be due to network issues or CDN unavailability.');
                 return;
             }
             
             if (typeof XLSX === 'undefined') {
-                showMessage('⚠️ فشل تحميل مكتبة معالجة Excel. يرجى تعطيل منع التتبع أو تحديث صفحة المتصفح.', 'error', 0);
-                console.error('XLSX library failed to load. This may be due to tracking prevention or network issues.');
+                showMessage('⚠️ فشل تحميل مكتبة معالجة Excel. يرجى التحقق من اتصال الإنترنت وإعادة تحميل الصفحة.', 'error', 0);
+                console.error('XLSX library failed to load. This may be due to network issues or CDN unavailability.');
                 return;
             }
             
