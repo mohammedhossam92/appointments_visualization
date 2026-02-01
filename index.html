@@ -6,7 +6,7 @@
     <title>نظام تصور المواعيد - عيادة الأسنان</title>
     
     <!-- FullCalendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" crossorigin="anonymous"/>
     
     <style>
         /* ===== FULLCALENDAR DARK MODE OVERRIDES ===== */
@@ -636,10 +636,10 @@
 
     <!-- ===== LIBRARIES ===== -->
     <!-- SheetJS for Excel parsing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
     
     <!-- FullCalendar -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js" crossorigin="anonymous"></script>
 
     <script>
         // ========================================
@@ -1148,6 +1148,10 @@
                     data = parseCSV(text);
                 } else {
                     // Process Excel file
+                    if (typeof XLSX === 'undefined') {
+                        throw new Error('مكتبة معالجة Excel غير متاحة. يرجى تعطيل منع التتبع في المتصفح وإعادة تحميل الصفحة.');
+                    }
+                    
                     const validTypes = [
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         'application/vnd.ms-excel'
@@ -1386,7 +1390,25 @@
         // INITIALIZATION
         // ========================================
         document.addEventListener('DOMContentLoaded', function() {
-            initializeCalendar();
+            // Check if required libraries are loaded
+            if (typeof FullCalendar === 'undefined') {
+                showMessage('⚠️ فشل تحميل مكتبة التقويم. يرجى تعطيل منع التتبع أو تحديث صفحة المتصفح.', 'error', 0);
+                console.error('FullCalendar library failed to load. This may be due to tracking prevention or network issues.');
+                return;
+            }
+            
+            if (typeof XLSX === 'undefined') {
+                showMessage('⚠️ فشل تحميل مكتبة معالجة Excel. يرجى تعطيل منع التتبع أو تحديث صفحة المتصفح.', 'error', 0);
+                console.error('XLSX library failed to load. This may be due to tracking prevention or network issues.');
+                return;
+            }
+            
+            try {
+                initializeCalendar();
+            } catch (error) {
+                showMessage('❌ حدث خطأ أثناء تهيئة التقويم', 'error', 0);
+                console.error('Calendar initialization error:', error);
+            }
         });
     </script>
 </body>
