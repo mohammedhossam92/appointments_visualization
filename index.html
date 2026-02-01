@@ -1113,7 +1113,7 @@
             }
             
             // Add last cell and row
-            if (currentCell || currentRow.length > 0) {
+            if (currentCell !== '' || currentRow.length > 0) {
                 currentRow.push(currentCell);
                 if (currentRow.length > 0) {
                     rows.push(currentRow);
@@ -1150,8 +1150,7 @@
                     // Process Excel file
                     const validTypes = [
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        'application/vnd.ms-excel',
-                        'text/csv'
+                        'application/vnd.ms-excel'
                     ];
                     
                     if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
